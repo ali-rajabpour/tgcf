@@ -1,14 +1,14 @@
 {
-  "name": "tgcf",
+  "name": "Phoenix TGFW",
   "stack": "container",
-  "description": "The ultimate tool to automate telegram message forwarding. To learn more visit https://github.com/aahnik/tgcf/wiki/Deploy-to-Heroku",
+  "description": "The ultimate telegram forwarding bot",
   "keywords": ["telegram", "forwarding", "automation"],
-  "website": "https://aahnik.dev",
-  "repository": "https://github.com/aahnik/tgcf",
-  "logo": "https://user-images.githubusercontent.com/66209958/115183360-3fa4d500-a0f9-11eb-9c0f-c5ed03a9ae17.png",
+  "website": "https://Rajabpour.com",
+  "repository": "https://github.com/ali-rajabpour/Phoenix-TGFW",
+  "logo": "tgcf/web_ui/static/logo.png",
   "env": {
-    "PASSWORD": {
-      "description": "The password to protect the web interface",
+    "DOMAIN": {
+      "description": "The domain of your app",
       "value": "",
       "required": true
     },

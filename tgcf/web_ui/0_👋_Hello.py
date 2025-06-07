@@ -1,5 +1,6 @@
 import streamlit as st
 
+import os
 from tgcf.web_ui.utils import hide_st, switch_theme
 from tgcf.config import read_config
 
@@ -13,9 +14,19 @@ hide_st(st)
 switch_theme(st,CONFIG)
 st.write("# Welcome to tgcf 👋")
 
-html = """
+import base64
+
+def get_base64_encoded_image(image_path):
+    with open(image_path, 'rb') as img_file:
+        return base64.b64encode(img_file.read()).decode('utf-8')
+
+# Get base64 string for the image
+img_path = os.path.join(os.path.dirname(__file__), 'static/PhoenixTransparent.png')
+img_base64 = get_base64_encoded_image(img_path)
+
+html = f"""
 <p align="center">
-<img src = "https://user-images.githubusercontent.com/66209958/115183360-3fa4d500-a0f9-11eb-9c0f-c5ed03a9ae17.png" alt = "tgcf logo"  width=120>
+<img src="data:image/png;base64,{img_base64}" alt="Phoenix logo" width=484>
 </p>
 """
 
@@ -23,7 +34,7 @@ st.components.v1.html(html, width=None, height=None, scrolling=False)
 with st.expander("Features"):
     st.markdown(
         """
-    tgcf is the ultimate tool to automate custom telegram message forwarding.
+    Phoenix TGFW is the ultimate tool to automate custom telegram message forwarding.
 
     The key features are:
 
@@ -37,9 +48,7 @@ with st.expander("Features"):
 
     - Detailed wiki + Video tutorial. You can also get help from the community.
 
-    - If you are a python developer, writing plugins for tgcf is like stealing candy from a baby. Plugins modify the message before they are sent to the destination chat.
-
-    What are you waiting for? Star the repo and click Watch to recieve updates.
+    - If you are a python developer, writing plugins for Phoenix TGFW is like stealing candy from a baby. Plugins modify the message before they are sent to the destination chat.
 
         """
     )

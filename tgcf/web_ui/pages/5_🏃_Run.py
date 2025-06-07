@@ -62,7 +62,7 @@ if check_password(st):
 
     if CONFIG.pid != 0:
         st.warning(
-            "You must click stop and then re-run tgcf to apply changes in config."
+            "You must click stop and then re-run Phoenix TGFW to apply changes in config."
         )
         # check if process is running using pid
         try:
