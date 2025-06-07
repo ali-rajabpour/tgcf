@@ -7,12 +7,12 @@ from tgcf.config import read_config
 CONFIG = read_config()
 
 st.set_page_config(
-    page_title="Hello",
-    page_icon="👋",
+    page_title="Phoenix TGFW",
+    page_icon="🐦‍🔥",
 )
 hide_st(st)
 switch_theme(st,CONFIG)
-st.write("# Welcome to tgcf 👋")
+st.write("# Welcome to Phoenix TGFW")
 
 import base64
 
@@ -26,7 +26,7 @@ img_base64 = get_base64_encoded_image(img_path)
 
 html = f"""
 <p align="center">
-<img src="data:image/png;base64,{img_base64}" alt="Phoenix logo" width=484>
+<img src="data:image/png;base64,{img_base64}" alt="Phoenix logo" width=120>
 </p>
 """
 
@@ -46,9 +46,14 @@ with st.expander("Features"):
 
     - Perform custom manipulation on messages. You can filter, format, replace, watermark, ocr and do whatever else you need !
 
-    - Detailed wiki + Video tutorial. You can also get help from the community.
+    - Improved By: Ali Rajabpour Sanati
+    
+    - https://Rajabpour.com
+    
+    - https://github.com/ali-rajabpour/Phoenix-TGFW
+    
+    - https://PhoenixTradeSolutions.ir
 
-    - If you are a python developer, writing plugins for Phoenix TGFW is like stealing candy from a baby. Plugins modify the message before they are sent to the destination chat.
 
         """
     )
