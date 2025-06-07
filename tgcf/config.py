@@ -72,8 +72,8 @@ class LoginConfig(BaseModel):
 
 
 class BotMessages(BaseModel):
-    start: str = "Hi! I am alive"
-    bot_help: str = "For details visit github.com/aahnik/tgcf"
+    start: str = "Phoenix is Flying!"
+    bot_help: str = "https://github.com/ali-rajabpour/Phoenix-TGFW"
 
 
 class Config(BaseModel):
@@ -228,9 +228,15 @@ def read_db():
     return cfg
 
 
-PASSWORD = os.getenv("PASSWORD", "tgcf")
+# Password protection is completely disabled
+PASSWORD = None
 ADMINS = []
 
+# Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 MONGO_CON_STR = os.getenv("MONGO_CON_STR")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "tgcf-config")
 MONGO_COL_NAME = os.getenv("MONGO_COL_NAME", "tgcf-instance-0")
@@ -238,10 +244,6 @@ MONGO_COL_NAME = os.getenv("MONGO_COL_NAME", "tgcf-instance-0")
 stg.CONFIG_TYPE = detect_config_type()
 CONFIG = read_config()
 
-if PASSWORD == "tgcf":
-    logging.warn(
-        "You have not set a password to protect the web access to tgcf.\nThe default password `tgcf` is used."
-    )
 from_to = {}
 is_bot: Optional[bool] = None
 logging.info("config.py got executed")
