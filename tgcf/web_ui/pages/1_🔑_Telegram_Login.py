@@ -13,9 +13,9 @@ st.set_page_config(
 hide_st(st)
 switch_theme(st,CONFIG)
 if check_password(st):
-    CONFIG.login.API_ID = int(
-        st.text_input("API ID", value=str(CONFIG.login.API_ID), type="password")
-    )
+    # Handle empty API_ID values by defaulting to 0
+    api_id_str = st.text_input("API ID", value=str(CONFIG.login.API_ID) if CONFIG.login.API_ID != 0 else "", type="password")
+    CONFIG.login.API_ID = int(api_id_str) if api_id_str.strip() else 0
     CONFIG.login.API_HASH = st.text_input(
         "API HASH", value=CONFIG.login.API_HASH, type="password"
     )
