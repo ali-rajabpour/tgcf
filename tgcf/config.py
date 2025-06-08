@@ -18,6 +18,16 @@ from tgcf.plugin_models import PluginConfig
 pwd = os.getcwd()
 env_file = os.path.join(pwd, ".env")
 
+# Check if we're running in Docker with the config directory
+config_dir = os.path.join(pwd, "config")
+docker_config_path = "/app/config"
+if os.path.isdir(docker_config_path):
+    CONFIG_DIR = docker_config_path
+elif os.path.isdir(config_dir):
+    CONFIG_DIR = config_dir
+else:
+    CONFIG_DIR = pwd
+
 load_dotenv(env_file)
 
 
@@ -95,29 +105,81 @@ class Config(BaseModel):
 
 
 def write_config_to_file(config: Config):
-    with open(CONFIG_FILE_NAME, "w", encoding="utf8") as file:
-        file.write(config.json())
+    # Use the config directory and make sure it's a file path
+    config_file_path = os.path.join(CONFIG_DIR, CONFIG_FILE_NAME)
+    
+    # If the path exists and is a directory, use an alternative filename
+    if os.path.exists(config_file_path) and os.path.isdir(config_file_path):
+        actual_file = os.path.join(CONFIG_DIR, "phoenixtgfw_config.json")
+        logging.warning(f"{config_file_path} is a directory, using {actual_file} instead")
+        with open(actual_file, "w", encoding="utf8") as file:
+            file.write(config.json())
+    else:
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(config_file_path), exist_ok=True)
+        with open(config_file_path, "w", encoding="utf8") as file:
+            file.write(config.json())
 
 
 def detect_config_type() -> int:
-    if os.getenv("MONGO_CON_STR"):
-        if MONGO_CON_STR:
-            logging.info("Using mongo db for storing config!")
+    # Get the storage mode from environment variable
+    storage_mode = os.getenv("STORAGE_MODE", "file").lower()
+    
+    if storage_mode == "mongodb":
+        # Strict MongoDB mode - fail if MongoDB connection string is not provided
+        if not os.getenv("MONGO_CON_STR"):
+            logging.error("STORAGE_MODE is set to 'mongodb' but MONGO_CON_STR is not provided")
+            sys.exit(1)
+            
+        logging.info("Using MongoDB for storing config as specified by STORAGE_MODE")
+        try:
             client = MongoClient(MONGO_CON_STR)
+            # Test the connection
+            client.server_info()
             stg.mycol = setup_mongo(client)
-        return 2
-    if CONFIG_FILE_NAME in os.listdir():
-        logging.info(f"{CONFIG_FILE_NAME} detected!")
-        return 1
-
+            return 2
+        except Exception as e:
+            logging.error(f"Failed to connect to MongoDB: {e}")
+            logging.error("STORAGE_MODE is set to 'mongodb' but MongoDB connection failed")
+            sys.exit(1)
+    
+    elif storage_mode == "file":
+        # Strict file mode - use config file
+        logging.info("Using file-based storage as specified by STORAGE_MODE")
+        
+        # Check if CONFIG_FILE_NAME exists in the config directory
+        config_file_path = os.path.join(CONFIG_DIR, CONFIG_FILE_NAME)
+        alt_file_path = os.path.join(CONFIG_DIR, "phoenixtgfw_config.json")
+        
+        if os.path.exists(config_file_path):
+            logging.info(f"{config_file_path} detected!")
+            # Check if it's a directory
+            if os.path.isdir(config_file_path):
+                logging.warning(f"{config_file_path} is a directory, will use alternative file")
+                # Check if alternative config file exists
+                if os.path.exists(alt_file_path):
+                    logging.info(f"Using alternative config file {alt_file_path}")
+                else:
+                    logging.info(f"Creating alternative config file {alt_file_path}")
+                    cfg = Config()
+                    with open(alt_file_path, "w", encoding="utf8") as file:
+                        file.write(cfg.json())
+            return 1
+        # If not in config directory, check current directory
+        elif CONFIG_FILE_NAME in os.listdir():
+            logging.info(f"{CONFIG_FILE_NAME} detected in current directory!")
+            return 1
+        else:
+            logging.info("Creating new config file as none exists")
+            # Ensure the config directory exists
+            os.makedirs(CONFIG_DIR, exist_ok=True)
+            cfg = Config()
+            write_config_to_file(cfg)
+            logging.info(f"Config file created!")
+            return 1
     else:
-        logging.info(
-            "config file not found. mongo not found. creating local config file."
-        )
-        cfg = Config()
-        write_config_to_file(cfg)
-        logging.info(f"{CONFIG_FILE_NAME} created!")
-        return 1
+        logging.error(f"Invalid STORAGE_MODE: {storage_mode}. Must be 'file' or 'mongodb'")
+        sys.exit(1)
 
 
 def read_config(count=1) -> Config:
@@ -129,8 +191,36 @@ def read_config(count=1) -> Config:
         logging.info(f"Trying to read config time:{count}")
     try:
         if stg.CONFIG_TYPE == 1:
-            with open(CONFIG_FILE_NAME, encoding="utf8") as file:
-                return Config.parse_raw(file.read())
+            # Check for config file in the config directory first
+            config_file_path = os.path.join(CONFIG_DIR, CONFIG_FILE_NAME)
+            alt_file_path = os.path.join(CONFIG_DIR, "phoenixtgfw_config.json")
+            
+            # Check if the config path exists and is a directory
+            if os.path.exists(config_file_path) and os.path.isdir(config_file_path):
+                # Try to use an alternative filename
+                logging.warning(f"{config_file_path} is a directory, trying {alt_file_path} instead")
+                if os.path.isfile(alt_file_path):
+                    with open(alt_file_path, encoding="utf8") as file:
+                        return Config.parse_raw(file.read())
+                else:
+                    # Create a new config file with the alternative name
+                    cfg = Config()
+                    with open(alt_file_path, "w", encoding="utf8") as file:
+                        file.write(cfg.json())
+                    return cfg
+            # If config path exists and is a file
+            elif os.path.isfile(config_file_path):
+                with open(config_file_path, encoding="utf8") as file:
+                    return Config.parse_raw(file.read())
+            # Fallback to the original behavior if not found in config directory
+            elif os.path.isfile(CONFIG_FILE_NAME):
+                with open(CONFIG_FILE_NAME, encoding="utf8") as file:
+                    return Config.parse_raw(file.read())
+            else:
+                # Create a new config file
+                cfg = Config()
+                write_config_to_file(cfg)
+                return cfg
         elif stg.CONFIG_TYPE == 2:
             return read_db()
         else:
